@@ -24,19 +24,30 @@ class DataProcessor:
         """ Alias for filter_tremor used in simulation scripts. """
         return self.filter_tremor(data, lowcut, highcut, order)
 
-    def estimate_displacement(self, accel_data):
+    def estimate_displacement(self, accel_data, peak_freq=6.0):
         """
-        A very rough estimate of displacement from filtered acceleration.
-        For small oscillations, displacement is proportional to -acceleration / omega^2.
-        As a simplification for an emulator, we can normalize and scale.
+        Converts acceleration (m/s^2) to displacement (mm).
+        Using the physical relationship for harmonic motion: d = a / (2*pi*f)^2
         """
-        # Remove gravity/bias
-        filtered = self.filter_tremor(accel_data)
-        # Numerical double integration with drift correction is complex.
-        # For an emulator where 'realism' of the shake is more important than absolute spatial accuracy
-        # relative to the phone, we can use the filtered acceleration as a displacement proxy 
-        # after scaling (e.g. 1 m/s^2 tremor amplitude ~ physical shake magnitude).
-        return filtered
+        # 1. Isolate the tremor (3-10Hz)
+        accel_filtered = self.filter_tremor(accel_data)
+        
+        # 2. Physics-based conversion
+        # omega = 2 * pi * f
+        omega = 2 * np.pi * peak_freq
+        
+        # Conversion factor for m/s^2 to mm:
+        # displacement_m = accel_m_s2 / omega^2
+        # displacement_mm = (accel_m_s2 / omega^2) * 1000
+        conversion_factor = 1000.0 / (omega**2)
+        
+        # Note: In harmonic motion, displacement is out of phase with acceleration.
+        # But for an emulator where we just want the 'shake', the sign doesn't matter 
+        # as much as the magnitude and frequency. We use the negative sign to be 
+        # physically correct (d = -a/w^2).
+        displacement_mm = -accel_filtered * conversion_factor
+        
+        return displacement_mm
 
 if __name__ == "__main__":
     dp = DataProcessor()

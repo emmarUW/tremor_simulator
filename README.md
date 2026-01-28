@@ -42,8 +42,18 @@ The tremor isolation logic follows this mathematical path:
 The MuJoCo simulation leverages official URDF/STL parameters to prevent "NaN" physics errors that typically occur when applying high-frequency forces to primitive shapes with inaccurate inertia.
 
 - **Integrator**: RK4 (Runge-Kutta 4th Order)
-- **Timestep**: 0.002s (500 Hz)
-- **Physics Stability**: Achieved via high joint damping and high-fidelity inertia tensors.
+- **Timestep**: 0.001s (1000 Hz)
+- **Scale Factor**: 0.004 results in 1:1 clinical replication (1g ≈ 4mm peak-to-peak).
+- **Physics Stability**: Achieved via high joint damping, armature, and linear interpolation between 100Hz control samples.
+
+## Dataset Handling
+The full dataset (Subjects 1-11) is ~3.7GB and is excluded from this repository to maintain performance. 
+- **Source**: Parkinson's Disease IMU Data (Accelerometer signals).
+- **Setup**: 
+  1. Download the raw data (PD_IMU_Data.zip).
+  2. Place it in `data/raw/`.
+  3. Run `python src/data_processing/clean_data.py` to generate the processed pickle files.
+  4. See `scripts/download_data.py` for automated setup notes.
 
 ## Replication Guide
 

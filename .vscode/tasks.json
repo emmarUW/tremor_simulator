@@ -1,0 +1,31 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Run MuJoCo Simulation",
+            "type": "shell",
+            "command": "C:/Users/emmar/anaconda3/Scripts/conda.exe run -p c:\\Users\\emmar\\Desktop\\Tremor_Emulator\\.conda --no-capture-output python src/simulation/run_simulation.py",
+            "group": "test",
+            "presentation": {
+                "reveal": "always",
+                "panel": "new"
+            },
+            "options": {
+                "env": {
+                    "PYTHONPATH": "${workspaceFolder}"
+                }
+            }
+        },
+        {
+            "label": "Generate Motion Plot",
+            "type": "shell",
+            "command": "C:/Users/emmar/anaconda3/Scripts/conda.exe run -p c:\\Users\\emmar\\Desktop\\Tremor_Emulator\\.conda --no-capture-output python src/main.py",
+            "group": "build",
+            "options": {
+                "env": {
+                    "PYTHONPATH": "${workspaceFolder}"
+                }
+            }
+        }
+    ]
+}

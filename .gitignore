@@ -1,0 +1,14 @@
+# MuJoCo logs
+MUJOCO_LOG.TXT
+
+# Python
+__pycache__/
+*.pyc
+.conda/
+.venv/
+venv/
+
+# Large assets or temporary data
+data/**
+!data/.gitkeep
+temp_xarm_ros/

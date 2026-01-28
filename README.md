@@ -152,5 +152,15 @@ To bypass Cartesian filtering, the emulator is shifting to **Joint-Space Servos*
 2.  Bypass the "Straight-Line" smoothing filter.
 3.  Directly leverage the $28,647 \text{ deg/s}^3$ joint jerk limits for rapid oscillation.
 
+## Safety & Reset Reference
+**IMPORTANT**: The parameters modified for clinical tremor emulation are aggressive and disable several industrial safety cushions. **Always reset the robot** to industrial defaults before using it for heavy lifting or human-collaborative tasks.
+
+| Parameter | Default (Industrial) | Emulator (Tuned) | Reset Value |
+| :--- | :--- | :--- | :--- |
+| **Collision Sensitivity** | 4 | **1 (Lowest)** | 4 (Essential Box Safety) |
+| **Joint Jerk** | ~5,000 deg/s³ | **28,647 deg/s³** | 5,000 deg/s³ |
+| **TCP Jerk** | 1,000 mm/s³ | **10,000 mm/s³** | 1,000 mm/s³ |
+| **TCP Accel** | 1,000 mm/s² | **2,000 mm/s²** | 1,000 mm/s² |
+
 3.  **Brake Release**: If the arm enters a collision state.
 Once basic positioning is achieved via the OEM interface, the Emulator system takes over for precision tremor replication.

@@ -14,11 +14,14 @@ class TremorEmulator:
         self.is_connected = False
         self.tremor_active = False
         
-        # Testing stance (joint angles in degrees)
-        # Standard "ready" position for tremor testing
-        self.testing_stance = [0, -35, -55, 0, 0] 
+        # Testing stances (joint angles in degrees)
+        self.stances = {
+            'Forward': [0, -35, -55, 0, 0],
+            'Orthogonal': [3.5, -3.1, -57.9, 60.5, 0.0]  # Gripper pointing down
+        }
         self.active_axis = 'X' 
         self.replication_mode = 'Cartesian' # 'Cartesian' or 'Joint'
+        self.joint_sensitivity = 0.5 # Degrees per mm offset
         
         if not is_simulation and ip:
             self.connect(ip)
@@ -59,12 +62,17 @@ class TremorEmulator:
         
         print(f"Arm at {self.ip} initialized - Robust high-frequency mode.")
 
-    def set_testing_stance(self):
-        """Move to the predefined testing stance."""
+    def set_testing_stance(self, stance_name='Forward'):
+        """Move to one of the predefined testing stances."""
         if not self.arm: return
+        
+        target = self.stances.get(stance_name, self.stances['Forward'])
+        
+        print(f"Moving to {stance_name} stance: {target}")
         self.arm.set_mode(0)
         self.arm.set_state(0)
-        self.arm.set_servo_angle(angle=self.testing_stance, speed=20, wait=True)
+        # 50 deg/s is moderately speedy for transitions
+        self.arm.set_servo_angle(angle=target, speed=50, wait=True)
 
     def open_gripper(self):
         """Fully open the xArm gripper."""
@@ -88,7 +96,7 @@ class TremorEmulator:
         # rather than get_position() which makes a blocking network request.
         return self.arm.position
 
-    def toggle_tremor(self, subject_data=None, axis='X', mode='Cartesian'):
+    def toggle_tremor(self, subject_data=None, axis='X', mode='Cartesian', sensitivity=0.5):
         """Toggles the high-frequency tremor replication."""
         if not self.arm: return False
         
@@ -101,6 +109,7 @@ class TremorEmulator:
             self.tremor_active = True
             self.active_axis = axis
             self.replication_mode = mode
+            self.joint_sensitivity = sensitivity
             # Start streaming in a background thread
             import threading
             threading.Thread(target=self._stream_tremor, args=(subject_data,), daemon=True).start()
@@ -182,9 +191,9 @@ class TremorEmulator:
                 
             else:
                 # --- JOINT MODE (New Experimental) ---
-                # Map 1mm displacement to roughly 0.5 degrees of joint vibration
+                # Map 1mm displacement to degrees of joint vibration
                 # This bypasses the IK solver entirely.
-                sens = 0.5 
+                sens = self.joint_sensitivity 
                 target_angles = list(base_angles)
                 
                 if self.active_axis == 'X':

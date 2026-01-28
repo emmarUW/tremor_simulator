@@ -106,6 +106,16 @@ class TremorGUI:
             rb.grid(row=i+1, column=1, sticky=tk.W, padx=40)
             self.axis_radios[val] = rb
 
+        # Sensitivity Factor (Visible only in Joint Mode)
+        self.sens_frame = ttk.Frame(config_frame)
+        self.sens_frame.grid(row=4, column=0, columnspan=2, sticky=tk.W, pady=5)
+        
+        ttk.Label(self.sens_frame, text="Joint Sensitivity:").pack(side=tk.LEFT)
+        self.sens_var = tk.DoubleVar(value=0.5)
+        self.sens_entry = ttk.Entry(self.sens_frame, textvariable=self.sens_var, width=5)
+        self.sens_entry.pack(side=tk.LEFT, padx=5)
+        ttk.Label(self.sens_frame, text="deg/mm (Scaling factor for direct vibration)", font=('Helvetica', 8), foreground="gray").pack(side=tk.LEFT)
+
         self.explanation_label = ttk.Label(config_frame, text="", wraplength=250, font=('Helvetica', 8, 'italic'), foreground="gray")
         self.explanation_label.grid(row=5, column=0, columnspan=2, pady=5, sticky=tk.W)
         
@@ -122,14 +132,20 @@ class TremorGUI:
         btn_grid = ttk.Frame(control_frame)
         btn_grid.pack()
 
-        self.stance_btn = ttk.Button(btn_grid, text="Testing Stance", command=lambda: self.run_async(self.emulator.set_testing_stance), state='disabled')
-        self.stance_btn.grid(row=0, column=0, columnspan=2, padx=5, pady=5, sticky="ew")
+        # Stance Selection
+        ttk.Label(btn_grid, text="Stance Profile:").grid(row=0, column=0, sticky=tk.W, padx=5)
+        self.stance_var = tk.StringVar(value="Forward")
+        self.stance_dropdown = ttk.Combobox(btn_grid, textvariable=self.stance_var, values=["Forward", "Orthogonal"], state="readonly", width=15)
+        self.stance_dropdown.grid(row=0, column=1, padx=5, pady=5)
+
+        self.stance_btn = ttk.Button(btn_grid, text="Go to Selected Stance", command=lambda: self.run_async(lambda: self.emulator.set_testing_stance(self.stance_var.get())), state='disabled')
+        self.stance_btn.grid(row=1, column=0, columnspan=2, padx=5, pady=5, sticky="ew")
 
         self.open_gripper_btn = ttk.Button(btn_grid, text="Open Gripper", command=lambda: self.run_async(self.emulator.open_gripper), state='disabled')
-        self.open_gripper_btn.grid(row=1, column=0, padx=5, pady=5)
+        self.open_gripper_btn.grid(row=2, column=0, padx=5, pady=5)
 
         self.close_gripper_btn = ttk.Button(btn_grid, text="Close Gripper", command=lambda: self.run_async(self.emulator.close_gripper), state='disabled')
-        self.close_gripper_btn.grid(row=1, column=1, padx=5, pady=5)
+        self.close_gripper_btn.grid(row=2, column=1, padx=5, pady=5)
 
         self.tremor_btn = ttk.Button(control_frame, text="START TREMOR REPLICATION", command=self.toggle_tremor_gui, state='disabled')
         self.tremor_btn.pack(fill=tk.X, pady=10)
@@ -263,6 +279,7 @@ class TremorGUI:
             if self.axis_var.get() in ['Y', 'All (XYZ)']:
                 self.axis_var.set('X')
             self.explanation_label.config(text="Cartesian: Y and 3D mode rejected by 5-DOF IK.")
+            self.sens_frame.grid_remove() # Hide sensitivity in Cartesian
         else:
             # Joint mode is used for 3D jitter. Individual axes are less useful here.
             self.axis_radios['X'].config(state='disabled')
@@ -271,6 +288,7 @@ class TremorGUI:
             self.axis_radios['All (XYZ)'].config(state='normal')
             self.axis_var.set('All (XYZ)')
             self.explanation_label.config(text="Joint: Bypasses IK safety to allow 3D vibration.")
+            self.sens_frame.grid() # Show sensitivity in Joint mode
 
     def enable_controls(self):
         self.stance_btn.config(state='normal')
@@ -288,8 +306,9 @@ class TremorGUI:
         subject_data = self.full_data[s_id]
         selected_axis = self.axis_var.get()
         selected_mode = self.mode_var.get()
+        sensitivity = self.sens_var.get()
 
-        active = self.emulator.toggle_tremor(subject_data, axis=selected_axis, mode=selected_mode)
+        active = self.emulator.toggle_tremor(subject_data, axis=selected_axis, mode=selected_mode, sensitivity=sensitivity)
         if active:
             self.tremor_btn.config(text="STOP TREMOR REPLICATION")
             self.status_var.set("TREMOR ACTIVE")
